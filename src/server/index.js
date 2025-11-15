@@ -16,6 +16,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:8080';
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(Boolean)
+  : ['http://localhost:8080', 'http://127.0.0.1:8080']);
 
 // Security middleware
 app.use(helmet());
@@ -25,7 +28,7 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 // CORS configuration
 const corsOptions = {
   origin: (origin, callback) => {
-    const allowedOrigins = [CLIENT_ORIGIN];
+    const allowedOrigins = ALLOWED_ORIGINS.length ? ALLOWED_ORIGINS : [CLIENT_ORIGIN];
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -68,10 +71,10 @@ app.get('/api/keys', apiLimiter, (req, res) => {
       });
     }
     
-    // Don't send the actual API key in development
-    const response = process.env.NODE_ENV === 'production' 
-      ? keys 
-      : { ...keys, elevenlabs: keys.elevenlabs ? '***MASKED***' : null };
+    // In production, do not send the raw API key to the client
+    const response = process.env.NODE_ENV === 'production'
+      ? { ...keys, elevenlabs: keys.elevenlabs ? '***MASKED***' : null }
+      : keys;
     
     res.json({
       ...response,
