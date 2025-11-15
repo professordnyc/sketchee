@@ -1,5 +1,7 @@
 # Sketchee MVP
 
+Live demo: https://sketchee-mvp.netlify.app/
+
 Voice-controlled P5.js sketch generator that transforms spoken descriptions into interactive visual sketches using Goose integration with optional ElevenLabs TTS via a secure backend.
 
 ## 🚀 Quick Start
