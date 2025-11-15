@@ -3,6 +3,16 @@
  * Implements ElevenLabs API integration with secure backend and Web Speech API fallback
  */
 
+function resolveApiBase() {
+    if (typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            return 'http://localhost:3001';
+        }
+    }
+    return 'https://sketchee-api.onrender.com';
+}
+
 export class ElevenLabsTTS {
     constructor(config) {
         this.config = config || {};
@@ -299,8 +309,8 @@ export class ElevenLabsTTS {
      */
     async loadApiKey() {
         try {
-            // Try to get API key from our secure backend
-            const response = await fetch('http://localhost:3001/api/keys', {
+            const apiBase = resolveApiBase();
+            const response = await fetch(`${apiBase}/api/keys`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
