@@ -1,30 +1,63 @@
 # Sketchee MVP
 
-Voice-controlled P5.js sketch generator that transforms spoken descriptions into interactive visual sketches using Goose AI and ElevenLabs voice feedback.
+Voice-controlled P5.js sketch generator that transforms spoken descriptions into interactive visual sketches using Goose integration with optional ElevenLabs TTS via a secure backend.
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 - Modern web browser with Web Speech API support (Chrome recommended)
-- Node.js 14+ (for development server)
+- Node.js 16+ (for local development)
 - Internet connection (for external APIs)
 
-### Installation
+### Local Setup
 ```bash
 cd sketchee-mvp
 npm install
-npm start
+
+# create your local env file
+cp env.template .env
+# edit .env and set ELEVENLABS_API_KEY (optional) and other values as needed
+
+# start backend (port 3001) and frontend (port 8080) together
+npm run dev
 ```
 
-Open http://localhost:8080 in your browser.
+Then open http://localhost:8080 in your browser.
 
-### Basic Usage
-1. Click "Start Recording"
-2. Say: "Draw a red circle"
-3. See your P5.js sketch generated instantly
-4. Hear voice confirmation via ElevenLabs TTS
+### 💡 Usage (MVP)
+1. Click **"Start Recording"**.
+2. Say a command like **"Draw a red circle"**.
+3. The app will:
+   - Capture your speech via the Web Speech API.
+   - Generate P5.js code (using Goose integration and/or mock logic).
+   - Render the sketch on the canvas.
+   - Provide voice feedback:
+     - Uses **ElevenLabs TTS** if the backend can load a valid API key.
+     - Otherwise falls back to **browser Web Speech synthesis**.
 
-## 📁 Project Structure
+## � Deployment
+
+This project is designed to be deployed with a static frontend and a small Node/Express backend:
+
+- **Backend (API server)**: Render Web Service
+  - Build command: `npm install`
+  - Start command: `node src/server/index.js`
+  - Environment variables (examples):
+    - `NODE_ENV=production`
+    - `ELEVENLABS_API_KEY=...` (optional, used only by the backend)
+    - `CLIENT_ORIGIN=https://<your-netlify-site>.netlify.app`
+    - `ALLOWED_ORIGINS=https://<your-netlify-site>.netlify.app`
+
+- **Frontend (static app)**: Netlify
+  - Build command: _empty_ (no build step required)
+  - Publish directory: `.` (repository root with `index.html`)
+
+The ElevenLabs TTS module automatically uses:
+
+- `http://localhost:3001` when running locally.
+- Your deployed backend URL (e.g. `https://sketchee-api.onrender.com`) in production.
+
+## � Project Structure
 
 ```
 sketchee-mvp/
@@ -171,6 +204,24 @@ Supported patterns:
 
 ## 📝 Development Notes
 
+### Challenge Context & Agent Orchestration
+
+This project was created as a quick entry into Block and Code.tv's **nokeyboardsallowed.dev** challenge.
+
+Sketchee was built using **Goose** (Desktop UI for Windows or CLI, also available for Mac and Linux) and its agent runtime to orchestrate multiple subagents:
+
+- **Project Planner / Manager** – created a `project_board.md` to define and track tasks.
+- **Architect** – defined structure and module interfaces.
+- **Frontend Developer** – implemented voice UI, P5.js rendering, and client wiring.
+- **Backend Developer** – implemented the secure ElevenLabs API key service and Express server.
+- **QA Engineer** – focused on flow validation and error handling.
+
+A neat feature of Goose is parallel subagent execution: in this project, frontend and backend agents could work **in parallel** against the same plan, coordinated by the planner.
+
+For a quick how-to on using Goose agents, recipes, and reusable workflows, see:
+
+- https://www.youtube.com/watch?v=yIBrD5AxtTc&t=316s
+
 ### Parallel Development
 - Frontend and Backend can work simultaneously
 - Mock data and fallbacks provided for independent testing
@@ -201,6 +252,4 @@ This is an MVP sprint project. Focus on core functionality over features.
 4. Run tests: `npm test`
 5. Submit focused pull requests
 
----
 
-**Ready for 40-minute sprint! 🚀**
