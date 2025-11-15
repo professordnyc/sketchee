@@ -26,8 +26,6 @@
                 <h2>Voice Controls</h2>
                 <div id="recording-controls">
                     <button id="record-button" class="voice-button idle">Start Recording</button>
-                    <button id="test-button" class="voice-button" style="background: #FF9800; font-size: 0.9em; padding: 8px 12px;" onclick="testSketch()">🧪 Test Sketch</button>
-                    <button id="voice-test-button" class="voice-button" style="background: #4CAF50; font-size: 0.9em; padding: 8px 12px;" onclick="testVoiceCommand()">🎤 Test Voice Command</button>
                     <div class="voice-commands-help">
                         <p><strong>Try saying:</strong></p>
                         <ul>
@@ -79,7 +77,7 @@
     <script type="module" src="src/js/modules/voice-input.js"></script>
     <script type="module" src="src/js/modules/goose-integration.js"></script>
     <script type="module" src="src/js/modules/elevenlabs-tts.js"></script>
-    <script type="module" src="src/js/modules/p5js-renderer-fixed.js"></script>
+    <script type="module" src="src/js/modules/p5js-renderer.js"></script>
     <script type="module" src="src/js/app.js"></script>
 
     <script>
@@ -96,75 +94,6 @@
             } else {
                 codeContent.style.display = 'block';
                 header.innerHTML = 'Generated Code ▼';
-            }
-        }
-        
-        // Test sketch function - WORKING VERSION
-        function testSketch() {
-            console.log('🧪 TEST SKETCH BUTTON CLICKED!');
-            
-            try {
-                const container = document.getElementById('p5js-container');
-                if (!container) {
-                    console.error('❌ Canvas container not found');
-                    return;
-                }
-                
-                container.innerHTML = '<div style="color: #2196F3; text-align: center; padding: 40px; font-size: 18px;">🧪 Testing P5.js rendering...</div>';
-                
-                if (typeof p5 === 'undefined') {
-                    console.error('❌ P5.js library not loaded');
-                    container.innerHTML = '<div style="color: red; text-align: center; padding: 40px;">❌ P5.js library not loaded</div>';
-                    return;
-                }
-                
-                setTimeout(() => {
-                    try {
-                        new p5((p) => {
-                            p.setup = function() {
-                                p.createCanvas(600, 400);
-                                console.log('✅ Test canvas created');
-                            };
-                            
-                            p.draw = function() {
-                                p.background(240, 240, 240);
-                                p.fill(255, 80, 80);
-                                p.stroke(0);
-                                p.strokeWeight(3);
-                                p.ellipse(300, 200, 150, 150);
-                                
-                                p.fill(0);
-                                p.textSize(20);
-                                p.textAlign(p.CENTER);
-                                p.text('🎉 TEST SUCCESSFUL!', 300, 50);
-                                
-                                p.fill(80, 120, 255);
-                                p.ellipse(300, 200, 80, 80);
-                            };
-                        }, 'p5js-container');
-                        
-                        container.classList.add('has-canvas');
-                        console.log('🎉 TEST SKETCH RENDERED SUCCESSFULLY!');
-                        
-                        const statusElement = document.getElementById('recording-status');
-                        if (statusElement) {
-                            statusElement.textContent = '🎉 Test sketch rendered successfully!';
-                            statusElement.className = 'status-message success';
-                        }
-                        
-                    } catch (renderError) {
-                        console.error('❌ P5.js rendering error:', renderError);
-                        container.innerHTML = `
-                            <div style="color: red; text-align: center; padding: 40px;">
-                                ❌ P5.js rendering failed<br>
-                                <strong>Error:</strong> ${renderError.message}
-                            </div>
-                        `;
-                    }
-                }, 1000);
-                
-            } catch (error) {
-                console.error('❌ Test function error:', error);
             }
         }
     </script>

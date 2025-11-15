@@ -1,5 +1,5 @@
 /**
- * P5.js Renderer Module
+ * P5.js Renderer Module - FIXED VERSION
  * Implements dynamic P5.js code execution and canvas management
  */
 
@@ -12,18 +12,21 @@ export class P5JSRenderer {
         this.canvasWidth = config.canvas.width || 800;
         this.canvasHeight = config.canvas.height || 600;
         
-        console.log('P5JSRenderer module initialized');
+        console.log('🎨 P5JSRenderer initialized');
     }
 
     async renderSketch(p5jsCode) {
-        console.log('Rendering P5.js sketch:', p5jsCode.substring(0, 100) + '...');
+        console.log('🚀 Starting sketch render:', p5jsCode.substring(0, 100) + '...');
         
         try {
             // Clear any existing sketch
             this.clearCanvas();
             
-            // Show loading state
+            // Show loading state briefly
             this.showLoading();
+            
+            // Small delay to show loading
+            await new Promise(resolve => setTimeout(resolve, 500));
             
             // Validate code before execution
             if (!this.validateCode(p5jsCode)) {
@@ -36,11 +39,12 @@ export class P5JSRenderer {
             // Execute the P5.js code
             await this.executeP5JSCode(p5jsCode);
             
-            console.log('Sketch rendered successfully');
+            console.log('✅ Sketch rendered successfully');
             
         } catch (error) {
-            console.error('Error rendering sketch:', error);
+            console.error('❌ Error rendering sketch:', error);
             this.showError(error.message);
+            throw error;
         }
     }
 
@@ -53,6 +57,7 @@ export class P5JSRenderer {
                     Generating your sketch...
                 </div>
             `;
+            container.classList.remove('has-canvas');
         }
     }
 
@@ -70,18 +75,14 @@ export class P5JSRenderer {
         }
     }
 
-    showPlaceholder(message = "Ready for your voice command") {
-        const container = document.getElementById(this.containerId);
-        if (container) {
-            container.innerHTML = `<div class="canvas-placeholder">${message}</div>`;
-            container.classList.remove('has-canvas');
-        }
-    }
-
     clearCanvas() {
         // Remove existing P5.js instance
         if (this.p5Instance) {
-            this.p5Instance.remove();
+            try {
+                this.p5Instance.remove();
+            } catch (e) {
+                console.warn('Error removing P5 instance:', e);
+            }
             this.p5Instance = null;
         }
         
@@ -89,7 +90,7 @@ export class P5JSRenderer {
         const container = document.getElementById(this.containerId);
         if (container) {
             container.innerHTML = '';
-            container.classList.remove('has-canvas');
+            container.classList.remove('has-canvas', 'success');
         }
     }
 
@@ -103,94 +104,128 @@ export class P5JSRenderer {
     }
 
     formatCode(code) {
-        // Basic code formatting with proper line breaks and indentation
+        // Basic code formatting
         return code
             .replace(/;/g, ';\n')
             .replace(/{/g, ' {\n  ')
             .replace(/}/g, '\n}')
             .replace(/\n\s*\n/g, '\n')
-            .split('\n')
-            .map(line => line.trim())
-            .filter(line => line.length > 0)
-            .join('\n');
+            .trim();
     }
 
-    executeP5JSCode(code) {
+    async executeP5JSCode(code) {
         return new Promise((resolve, reject) => {
+            console.log('🎯 Executing P5.js code...');
+            
             try {
-                // Create a safe execution environment
-                const safeCode = this.wrapCodeForExecution(code);
+                // Ensure we have the P5.js library
+                if (typeof p5 === 'undefined') {
+                    throw new Error('P5.js library not loaded');
+                }
                 
-                // Create new P5.js instance
+                // Wrap and prepare code
+                const wrappedCode = this.wrapCodeForExecution(code);
+                console.log('📝 Wrapped code:', wrappedCode);
+                
+                // Clear container first
+                const container = document.getElementById(this.containerId);
+                if (!container) {
+                    throw new Error('Canvas container not found');
+                }
+                container.innerHTML = '';
+                
+                // Create P5.js instance with proper error handling
                 this.p5Instance = new p5((p) => {
-                    // Inject the user's code into the p5 context
-                    const wrappedCode = safeCode.replace(/createCanvas/g, 'p.createCanvas')
-                        .replace(/background/g, 'p.background')
-                        .replace(/fill/g, 'p.fill')
-                        .replace(/stroke/g, 'p.stroke')
-                        .replace(/noStroke/g, 'p.noStroke')
-                        .replace(/noFill/g, 'p.noFill')
-                        .replace(/ellipse/g, 'p.ellipse')
-                        .replace(/circle/g, 'p.circle')
-                        .replace(/rect/g, 'p.rect')
-                        .replace(/square/g, 'p.square')
-                        .replace(/line/g, 'p.line')
-                        .replace(/triangle/g, 'p.triangle')
-                        .replace(/point/g, 'p.point')
-                        .replace(/push/g, 'p.push')
-                        .replace(/pop/g, 'p.pop')
-                        .replace(/translate/g, 'p.translate')
-                        .replace(/rotate/g, 'p.rotate')
-                        .replace(/scale/g, 'p.scale')
-                        .replace(/frameCount/g, 'p.frameCount')
-                        .replace(/width/g, 'p.width')
-                        .replace(/height/g, 'p.height')
-                        .replace(/mouseX/g, 'p.mouseX')
-                        .replace(/mouseY/g, 'p.mouseY')
-                        .replace(/mousePressed/g, 'p.mousePressed')
-                        .replace(/keyPressed/g, 'p.keyPressed');
+                    console.log('🎨 P5.js sketch function called');
                     
-                    // Execute the wrapped code
                     try {
-                        eval(wrappedCode);
+                        // Replace P5.js functions with p. prefixed versions
+                        const processedCode = this.processFunctionCalls(wrappedCode, p);
+                        console.log('🔧 Processed code:', processedCode);
+                        
+                        // Execute the code in the P5 context
+                        const func = new Function('p', processedCode);
+                        func(p);
+                        
+                        console.log('✅ P5.js code executed successfully');
+                        
                     } catch (execError) {
-                        console.error('Code execution error:', execError);
+                        console.error('❌ P5.js execution error:', execError);
                         reject(execError);
+                        return;
                     }
                 }, this.containerId);
                 
-                // Mark container as having canvas
+                // Wait a bit for the canvas to be created, then resolve
                 setTimeout(() => {
-                    const container = document.getElementById(this.containerId);
-                    if (container && container.querySelector('canvas')) {
+                    const canvas = container.querySelector('canvas');
+                    if (canvas) {
                         container.classList.add('has-canvas');
+                        container.classList.add('success');
+                        setTimeout(() => container.classList.remove('success'), 2000);
+                        console.log('🎉 Canvas created and displayed');
+                        resolve();
+                    } else {
+                        reject(new Error('Canvas was not created'));
                     }
-                    resolve();
-                }, 100);
+                }, 300);
                 
             } catch (error) {
+                console.error('❌ Setup error:', error);
                 reject(error);
             }
         });
     }
 
+    processFunctionCalls(code, p) {
+        // Replace P5.js function calls with p. prefixed versions
+        return code
+            .replace(/function\s+setup\s*\(\)/g, 'p.setup = function()')
+            .replace(/function\s+draw\s*\(\)/g, 'p.draw = function()')
+            .replace(/createCanvas\s*\(/g, 'p.createCanvas(')
+            .replace(/background\s*\(/g, 'p.background(')
+            .replace(/fill\s*\(/g, 'p.fill(')
+            .replace(/stroke\s*\(/g, 'p.stroke(')
+            .replace(/noStroke\s*\(/g, 'p.noStroke(')
+            .replace(/noFill\s*\(/g, 'p.noFill(')
+            .replace(/ellipse\s*\(/g, 'p.ellipse(')
+            .replace(/circle\s*\(/g, 'p.circle(')
+            .replace(/rect\s*\(/g, 'p.rect(')
+            .replace(/square\s*\(/g, 'p.square(')
+            .replace(/line\s*\(/g, 'p.line(')
+            .replace(/triangle\s*\(/g, 'p.triangle(')
+            .replace(/point\s*\(/g, 'p.point(')
+            .replace(/push\s*\(/g, 'p.push(')
+            .replace(/pop\s*\(/g, 'p.pop(')
+            .replace(/translate\s*\(/g, 'p.translate(')
+            .replace(/rotate\s*\(/g, 'p.rotate(')
+            .replace(/scale\s*\(/g, 'p.scale(')
+            .replace(/strokeWeight\s*\(/g, 'p.strokeWeight(')
+            .replace(/rectMode\s*\(/g, 'p.rectMode(')
+            .replace(/\bframeCount\b/g, 'p.frameCount')
+            .replace(/\bwidth\b/g, 'p.width')
+            .replace(/\bheight\b/g, 'p.height')
+            .replace(/\bmouseX\b/g, 'p.mouseX')
+            .replace(/\bmouseY\b/g, 'p.mouseY')
+            .replace(/\bCENTER\b/g, 'p.CENTER');
+    }
+
     wrapCodeForExecution(code) {
-        // Ensure the code has proper setup and draw functions
-        let wrappedCode = code;
+        let wrappedCode = code.trim();
         
-        // Add default setup if missing
-        if (!code.includes('function setup')) {
-            wrappedCode = `function setup() { createCanvas(${this.canvasWidth}, ${this.canvasHeight}); }\n` + wrappedCode;
+        // Ensure we have setup function
+        if (!wrappedCode.includes('function setup')) {
+            wrappedCode = `function setup() {\n  createCanvas(${this.canvasWidth}, ${this.canvasHeight});\n}\n\n` + wrappedCode;
         }
         
-        // Add default draw if missing  
-        if (!code.includes('function draw')) {
-            wrappedCode += `\nfunction draw() { /* User code executed in setup */ }`;
+        // Ensure we have draw function
+        if (!wrappedCode.includes('function draw')) {
+            wrappedCode += `\n\nfunction draw() {\n  // Static sketch\n}`;
         }
         
-        // Ensure canvas creation with proper size
+        // Ensure proper canvas size
         wrappedCode = wrappedCode.replace(
-            /createCanvas\([^)]*\)/g, 
+            /createCanvas\s*\([^)]*\)/g, 
             `createCanvas(${this.canvasWidth}, ${this.canvasHeight})`
         );
         
@@ -198,16 +233,21 @@ export class P5JSRenderer {
     }
 
     validateCode(code) {
-        // Basic validation checks
         if (!code || typeof code !== 'string') {
             return false;
         }
         
-        // Check for potentially dangerous functions
-        const dangerousFunctions = ['eval', 'Function', 'setTimeout', 'setInterval', 'fetch', 'XMLHttpRequest'];
-        for (const func of dangerousFunctions) {
-            if (code.includes(func)) {
-                console.warn(`Potentially dangerous function detected: ${func}`);
+        // Check for dangerous functions
+        const dangerousFunctions = [
+            'eval', 'Function', 'setTimeout', 'setInterval', 
+            'fetch', 'XMLHttpRequest', 'import', 'require',
+            'document\.', 'window\.', 'localStorage', 'sessionStorage'
+        ];
+        
+        for (const pattern of dangerousFunctions) {
+            const regex = new RegExp(pattern);
+            if (regex.test(code)) {
+                console.warn(`Dangerous pattern detected: ${pattern}`);
                 return false;
             }
         }
@@ -221,113 +261,31 @@ export class P5JSRenderer {
         return true;
     }
 
-    resizeCanvas(width, height) {
-        if (this.p5Instance && this.p5Instance.resizeCanvas) {
-            this.p5Instance.resizeCanvas(width, height);
-            this.canvasWidth = width;
-            this.canvasHeight = height;
-        }
-    }
+    // Test method for debugging
+    async renderTestSketch() {
+        console.log('🧪 Rendering test sketch...');
+        
+        const testCode = `
+function setup() {
+    createCanvas(800, 600);
+}
 
-    exportSketch() {
-        if (this.p5Instance && this.p5Instance.saveCanvas) {
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            this.p5Instance.saveCanvas(`sketchee-${timestamp}`, 'png');
-        }
+function draw() {
+    background(240, 240, 240);
+    fill(255, 100, 100);
+    stroke(0);
+    strokeWeight(2);
+    ellipse(400, 300, 150, 150);
+}`;
+        
+        await this.renderSketch(testCode);
     }
 
     destroy() {
         this.clearCanvas();
-        console.log('P5JSRenderer destroyed');
-    }
-
-    // Mock function for testing without backend
-    renderMockSketch(command) {
-        console.log('Rendering mock sketch for:', command);
-        
-        // Simple mock P5.js code generation based on command
-        let mockCode;
-        
-        if (command.includes('circle') || command.includes('round')) {
-            const color = this.extractColor(command) || 'red';
-            const colorValues = this.getColorValues(color);
-            mockCode = `
-function setup() {
-    createCanvas(800, 600);
-}
-
-function draw() {
-    background(240);
-    fill(${colorValues.join(', ')});
-    ellipse(400, 300, 150, 150);
-}`;
-        } else if (command.includes('square') || command.includes('rectangle') || command.includes('rect')) {
-            const color = this.extractColor(command) || 'blue';
-            const colorValues = this.getColorValues(color);
-            mockCode = `
-function setup() {
-    createCanvas(800, 600);
-}
-
-function draw() {
-    background(240);
-    fill(${colorValues.join(', ')});
-    rect(350, 250, 100, 100);
-}`;
-        } else if (command.includes('triangle')) {
-            const color = this.extractColor(command) || 'green';
-            const colorValues = this.getColorValues(color);
-            mockCode = `
-function setup() {
-    createCanvas(800, 600);
-}
-
-function draw() {
-    background(240);
-    fill(${colorValues.join(', ')});
-    triangle(400, 200, 350, 350, 450, 350);
-}`;
-        } else {
-            // Default fallback
-            mockCode = `
-function setup() {
-    createCanvas(800, 600);
-}
-
-function draw() {
-    background(240);
-    fill(150);
-    ellipse(400, 300, 100, 100);
-}`;
-        }
-        
-        this.renderSketch(mockCode);
-    }
-
-    extractColor(text) {
-        const colors = ['red', 'blue', 'green', 'yellow', 'orange', 'purple', 'pink', 'black', 'white', 'gray'];
-        for (const color of colors) {
-            if (text.toLowerCase().includes(color)) {
-                return color;
-            }
-        }
-        return null;
-    }
-
-    getColorValues(colorName) {
-        const colorMap = {
-            'red': [255, 0, 0],
-            'blue': [0, 0, 255],
-            'green': [0, 255, 0],
-            'yellow': [255, 255, 0],
-            'orange': [255, 165, 0],
-            'purple': [128, 0, 128],
-            'pink': [255, 192, 203],
-            'black': [0, 0, 0],
-            'white': [255, 255, 255],
-            'gray': [128, 128, 128]
-        };
-        
-        return colorMap[colorName] || [100, 100, 100];
+        console.log('🗑️ P5JSRenderer destroyed');
     }
 }
+
+// Make it globally available for debugging
+window.P5JSRenderer = P5JSRenderer;
