@@ -1,0 +1,196 @@
+/* Voice Controls Styling - FRONTEND IMPLEMENTATION */
+
+#voice-controls {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+#recording-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+.voice-button {
+  padding: var(--spacing-lg);
+  border: none;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-size: 1.2em;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  width: 100%;
+  margin-bottom: var(--spacing-md);
+  box-shadow: var(--shadow);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.voice-button.recording {
+  background: linear-gradient(135deg, #FF4444 0%, #CC0000 100%);
+  color: white;
+  animation: pulse 2s infinite;
+}
+
+.voice-button.idle {
+  background: linear-gradient(135deg, var(--primary-color) 0%, #1976D2 100%);
+  color: white;
+}
+
+.voice-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.voice-button:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow);
+}
+
+.voice-commands-help {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+  margin-top: var(--spacing-md);
+}
+
+.voice-commands-help p {
+  margin-bottom: var(--spacing-sm);
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.voice-commands-help ul {
+  list-style: none;
+  padding: 0;
+}
+
+.voice-commands-help li {
+  padding: var(--spacing-xs);
+  margin-bottom: var(--spacing-xs);
+  background: rgba(var(--primary-color-rgb), 0.1);
+  border-radius: 4px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 0.9em;
+}
+
+#transcription-display {
+  min-height: 80px;
+  padding: var(--spacing-md);
+  background: white;
+  border: 2px solid var(--border-color);
+  border-radius: var(--border-radius);
+  margin-bottom: var(--spacing-md);
+  transition: all 0.3s ease;
+}
+
+#transcription-display.active {
+  border-color: var(--primary-color);
+  background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+  box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
+}
+
+#transcription-display label {
+  display: block;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: var(--spacing-sm);
+  font-size: 0.9em;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.transcription-text {
+  font-style: italic;
+  color: #666;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  font-size: 1.1em;
+  line-height: 1.4;
+}
+
+.transcription-text.final {
+  color: var(--text-color);
+  font-style: normal;
+  font-weight: 500;
+}
+
+.transcription-text em {
+  opacity: 0.7;
+  font-style: italic;
+}
+
+#status-feedback {
+  min-height: 50px;
+  padding: var(--spacing-md);
+  background: linear-gradient(135deg, #F5F5F5 0%, #EEEEEE 100%);
+  border-radius: var(--border-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-color);
+}
+
+.status-message {
+  font-weight: 600;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  font-size: 1.1em;
+}
+
+.status-message.processing {
+  color: var(--accent-color);
+  animation: pulse 2s infinite;
+}
+
+.status-message.success {
+  color: var(--secondary-color);
+}
+
+.status-message.error {
+  color: var(--error-color);
+}
+
+.voice-indicator {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--secondary-color) 0%, #388E3C 100%);
+  animation: pulse 2s infinite;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+}
+
+@keyframes pulse {
+  0% { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.7; 
+    transform: scale(1.05);
+  }
+  100% { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .voice-button {
+    font-size: 1em;
+    padding: var(--spacing-md);
+  }
+  
+  .voice-commands-help {
+    font-size: 0.9em;
+  }
+  
+  .transcription-text {
+    font-size: 1em;
+  }
+}

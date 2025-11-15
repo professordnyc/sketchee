@@ -1,0 +1,265 @@
+/* P5.js Canvas Display Styling - ENHANCED IMPLEMENTATION */
+
+#canvas-section {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  border: 2px solid var(--border-color);
+  transition: border-color 0.3s ease;
+}
+
+#canvas-section:hover {
+  border-color: var(--primary-color);
+}
+
+#p5js-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 450px;
+  background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
+  border: 2px dashed var(--border-color);
+  border-radius: var(--border-radius);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+#p5js-container.has-canvas {
+  border-style: solid;
+  border-color: var(--primary-color);
+  background: white;
+  box-shadow: inset 0 0 20px rgba(33, 150, 243, 0.1);
+}
+
+.canvas-placeholder {
+  text-align: center;
+  color: #999;
+  font-size: 1.2em;
+  padding: var(--spacing-xl);
+}
+
+.canvas-placeholder::before {
+  content: "🎨";
+  display: block;
+  font-size: 4em;
+  margin-bottom: var(--spacing-lg);
+  animation: float 3s ease-in-out infinite;
+}
+
+/* P5.js canvas styling */
+#p5js-container canvas {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+#p5js-container canvas:hover {
+  transform: scale(1.02);
+}
+
+.canvas-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.95);
+  padding: var(--spacing-xl);
+  border-radius: var(--border-radius);
+  text-align: center;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.canvas-error {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--error-color);
+  background: rgba(244, 67, 54, 0.1);
+  border-radius: var(--border-radius);
+  margin: var(--spacing-md);
+}
+
+.canvas-error .error-icon {
+  font-size: 3em;
+  margin-bottom: var(--spacing-md);
+}
+
+.canvas-error .error-message {
+  font-size: 1.2em;
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+}
+
+.canvas-error .error-suggestion {
+  font-size: 0.9em;
+  color: #666;
+  font-style: italic;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Code display panel */
+#code-display {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 2px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+#code-display.collapsed {
+  height: auto;
+}
+
+#code-display.collapsed #code-content {
+  display: none;
+}
+
+#code-display h2 {
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  padding: var(--spacing-md);
+  margin: -var(--spacing-lg) -var(--spacing-lg) var(--spacing-md) -var(--spacing-lg);
+  background: linear-gradient(135deg, var(--primary-color) 0%, #1976D2 100%);
+  color: white;
+  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  transition: all 0.3s ease;
+}
+
+#code-display h2:hover {
+  background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+  transform: translateY(-1px);
+}
+
+#code-display h2::after {
+  content: "▼";
+  position: absolute;
+  right: var(--spacing-md);
+  top: 50%;
+  transform: translateY(-50%);
+  transition: transform 0.3s ease;
+  font-size: 0.8em;
+}
+
+#code-display.collapsed h2::after {
+  transform: translateY(-50%) rotate(-90deg);
+}
+
+#code-content {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+#generated-code {
+  background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+  border: none;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-lg);
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.9em;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  max-height: 400px;
+  overflow-y: auto;
+  color: #e2e8f0;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+#generated-code:empty::before {
+  content: "// Generated P5.js code will appear here...\n// Try saying \"draw a red circle\" to see the magic!";
+  color: #718096;
+  font-style: italic;
+}
+
+/* Syntax highlighting simulation */
+#generated-code {
+  background: #1a202c;
+}
+
+/* Scrollbar styling for code */
+#generated-code::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+#generated-code::-webkit-scrollbar-track {
+  background: #2d3748;
+  border-radius: 4px;
+}
+
+#generated-code::-webkit-scrollbar-thumb {
+  background: #4a5568;
+  border-radius: 4px;
+}
+
+#generated-code::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  #p5js-container {
+    min-height: 300px;
+  }
+  
+  .canvas-placeholder {
+    font-size: 1em;
+  }
+  
+  .canvas-placeholder::before {
+    font-size: 2.5em;
+    margin-bottom: var(--spacing-md);
+  }
+  
+  #generated-code {
+    font-size: 0.8em;
+    max-height: 250px;
+  }
+  
+  #code-display h2 {
+    font-size: 1.1em;
+  }
+}
+
+/* Animation for successful sketch generation */
+@keyframes successPulse {
+  0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+}
+
+#p5js-container.success {
+  animation: successPulse 2s;
+}
+
+/* Loading animation enhancement */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.canvas-loading {
+  animation: pulse 2s infinite;
+}

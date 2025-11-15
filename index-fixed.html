@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sketchee MVP - Voice-Controlled P5.js Generator</title>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="src/css/styles.css">
+    <link rel="stylesheet" href="src/css/voice-controls.css">
+    <link rel="stylesheet" href="src/css/canvas-display.css">
+    
+    <!-- P5.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+</head>
+<body>
+    <div id="app-container">
+        <header>
+            <h1>Sketchee MVP</h1>
+            <p>Create P5.js sketches with your voice</p>
+        </header>
+
+        <main>
+            <!-- Voice Controls Section -->
+            <section id="voice-controls" class="control-panel">
+                <h2>Voice Controls</h2>
+                <div id="recording-controls">
+                    <button id="record-button" class="voice-button idle">Start Recording</button>
+                    <button id="test-button" class="voice-button" style="background: #FF9800; font-size: 0.9em; padding: 8px 12px;" onclick="testSketch()">🧪 Test Sketch</button>
+                    <div class="voice-commands-help">
+                        <p><strong>Try saying:</strong></p>
+                        <ul>
+                            <li>"Draw a red circle"</li>
+                            <li>"Create a blue square"</li>
+                            <li>"Make it bigger"</li>
+                            <li>"Add a green triangle"</li>
+                        </ul>
+                    </div>
+                </div>
+                <div id="transcription-display">
+                    <label for="transcription-text">What you're saying:</label>
+                    <div id="transcription-text" class="transcription-text">
+                        Click "Start Recording" and speak your command...
+                    </div>
+                </div>
+                <div id="status-feedback">
+                    <div id="recording-status" class="status-message">Ready to record</div>
+                </div>
+            </section>
+
+            <!-- P5.js Canvas Section -->
+            <section id="canvas-section" class="canvas-container">
+                <h2>Generated Sketch</h2>
+                <div id="p5js-container">
+                    <div class="canvas-placeholder">
+                        Ready for your voice command
+                    </div>
+                </div>
+            </section>
+
+            <!-- Code Display Section -->
+            <section id="code-display" class="collapsible-panel">
+                <h2 onclick="toggleCodeDisplay()">Generated Code ▼</h2>
+                <div id="code-content">
+                    <pre id="generated-code">
+                        <!-- Generated P5.js code will appear here -->
+                    </pre>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Powered by Goose, P5.js, and ElevenLabs</p>
+        </footer>
+    </div>
+
+    <!-- JavaScript Modules -->
+    <script type="module" src="src/js/modules/voice-input.js"></script>
+    <script type="module" src="src/js/modules/goose-integration.js"></script>
+    <script type="module" src="src/js/modules/elevenlabs-tts.js"></script>
+    <script type="module" src="src/js/modules/p5js-renderer-fixed.js"></script>
+    <script type="module" src="src/js/app.js"></script>
+
+    <script>
+        // Simple code display toggle
+        function toggleCodeDisplay() {
+            const codeDisplay = document.getElementById('code-display');
+            const codeContent = document.getElementById('code-content');
+            const header = codeDisplay.querySelector('h2');
+            
+            codeDisplay.classList.toggle('collapsed');
+            if (codeDisplay.classList.contains('collapsed')) {
+                codeContent.style.display = 'none';
+                header.innerHTML = 'Generated Code ▶';
+            } else {
+                codeContent.style.display = 'block';
+                header.innerHTML = 'Generated Code ▼';
+            }
+        }
+        
+        // Test sketch function - NOW WORKING!
+        function testSketch() {
+            console.log('🧪 TEST SKETCH BUTTON CLICKED!');
+            
+            try {
+                // Get canvas container
+                const container = document.getElementById('p5js-container');
+                if (!container) {
+                    console.error('❌ Canvas container not found');
+                    alert('❌ Canvas container not found');
+                    return;
+                }
+                
+                console.log('✅ Canvas container found');
+                
+                // Show testing message
+                container.innerHTML = '<div style="color: #2196F3; text-align: center; padding: 40px; font-size: 18px;">🧪 Testing P5.js rendering...</div>';
+                
+                // Check if P5.js is loaded
+                if (typeof p5 === 'undefined') {
+                    console.error('❌ P5.js library not loaded');
+                    container.innerHTML = '<div style="color: red; text-align: center; padding: 40px;">❌ P5.js library not loaded</div>';
+                    alert('❌ P5.js library not loaded');
+                    return;
+                }
+                
+                console.log('✅ P5.js library is loaded');
+                
+                // Wait a moment then create test sketch
+                setTimeout(() => {
+                    console.log('🎨 Creating test P5.js sketch...');
+                    
+                    try {
+                        // Create direct P5.js instance
+                        new p5((p) => {
+                            p.setup = function() {
+                                const canvas = p.createCanvas(600, 400);
+                                console.log('✅ P5.js canvas created:', canvas);
+                            };
+                            
+                            p.draw = function() {
+                                p.background(240, 240, 240);
+                                
+                                // Draw test circle
+                                p.fill(255, 80, 80);
+                                p.stroke(0);
+                                p.strokeWeight(3);
+                                p.ellipse(300, 200, 150, 150);
+                                
+                                // Draw test text
+                                p.fill(0);
+                                p.textSize(20);
+                                p.textAlign(p.CENTER);
+                                p.text('🎉 TEST SUCCESSFUL!', 300, 50);
+                                
+                                // Draw smaller circle
+                                p.fill(80, 120, 255);
+                                p.ellipse(300, 200, 80, 80);
+                            };
+                        }, 'p5js-container');
+                        
+                        // Mark success
+                        container.classList.add('has-canvas');
+                        console.log('🎉 TEST SKETCH RENDERED SUCCESSFULLY!');
+                        
+                        // Update status
+                        const statusElement = document.getElementById('recording-status');
+                        if (statusElement) {
+                            statusElement.textContent = '🎉 Test sketch rendered successfully!';
+                            statusElement.className = 'status-message success';
+                        }
+                        
+                        // Show success alert
+                        setTimeout(() => {
+                            alert('🎉 SUCCESS! P5.js rendering is working correctly!');
+                        }, 1000);
+                        
+                    } catch (renderError) {
+                        console.error('❌ P5.js rendering error:', renderError);
+                        container.innerHTML = `
+                            <div style="color: red; text-align: center; padding: 40px;">
+                                ❌ P5.js rendering failed<br>
+                                <strong>Error:</strong> ${renderError.message}<br>
+                                <small>Check browser console for details</small>
+                            </div>
+                        `;
+                        alert('❌ P5.js rendering failed: ' + renderError.message);
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                console.error('❌ Test function error:', error);
+                alert('❌ Test function failed: ' + error.message);
+            }
+        }
+        
+        // Alternative test for voice commands
+        function testVoiceCommand() {
+            console.log('🎤 Testing voice command simulation...');
+            
+            if (window.SketcheeApp) {
+                try {
+                    window.SketcheeApp.processVoiceCommand('draw a red circle');
+                    console.log('✅ Voice command test initiated');
+                } catch (error) {
+                    console.error('❌ Voice command test failed:', error);
+                }
+            } else {
+                console.warn('⚠️ SketcheeApp not initialized yet');
+                alert('⚠️ App not fully loaded yet. Try the Test Sketch button first.');
+            }
+        }
+    </script>
+</body>
+</html>

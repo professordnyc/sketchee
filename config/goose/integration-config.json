@@ -1,0 +1,60 @@
+{
+  "goose": {
+    "endpoint": "http://localhost:8000/api/generate-sketch",
+    "timeout": 15000,
+    "retries": 2,
+    "model": "gpt-4",
+    "temperature": 0.3
+  },
+  "commandParsing": {
+    "supportedPatterns": [
+      {
+        "pattern": "draw a {color} {shape}",
+        "example": "draw a red circle"
+      },
+      {
+        "pattern": "create a {shape} that is {color}",
+        "example": "create a circle that is blue"
+      },
+      {
+        "pattern": "make a {size} {color} {shape}",
+        "example": "make a big red square"
+      },
+      {
+        "pattern": "draw {number} {color} {shape}s",
+        "example": "draw three blue circles"
+      },
+      {
+        "pattern": "make it {action}",
+        "example": "make it spin"
+      },
+      {
+        "pattern": "change the color to {color}",
+        "example": "change the color to green"
+      }
+    ],
+    "fallbackTemplates": {
+      "simpleShape": "function setup() { createCanvas(800, 600); } function draw() { background(240); fill(100); ellipse(400, 300, 100, 100); }",
+      "coloredShape": "function setup() { createCanvas(800, 600); } function draw() { background(240); fill({r}, {g}, {b}); {shape}({x}, {y}, {size}); }",
+      "animatedShape": "function setup() { createCanvas(800, 600); } function draw() { background(240); fill({r}, {g}, {b}); push(); translate(400, 300); rotate(frameCount * {speed}); {shape}(0, 0, {size}); pop(); }"
+    }
+  },
+  "p5jsGeneration": {
+    "codeStructure": {
+      "requireSetup": true,
+      "requireDraw": true,
+      "allowPreload": false,
+      "maxLines": 50
+    },
+    "validation": {
+      "syntaxCheck": true,
+      "securityScan": true,
+      "performanceCheck": true
+    }
+  },
+  "errorHandling": {
+    "parseErrors": "return_simple_fallback",
+    "generationTimeout": "return_default_sketch",
+    "apiErrors": "show_user_friendly_message"
+  }
+}

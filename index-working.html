@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sketchee MVP - Voice-Controlled P5.js Generator</title>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="src/css/styles.css">
+    <link rel="stylesheet" href="src/css/voice-controls.css">
+    <link rel="stylesheet" href="src/css/canvas-display.css">
+    
+    <!-- P5.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+</head>
+<body>
+    <div id="app-container">
+        <header>
+            <h1>Sketchee MVP</h1>
+            <p>Create P5.js sketches with your voice</p>
+        </header>
+
+        <main>
+            <!-- Voice Controls Section -->
+            <section id="voice-controls" class="control-panel">
+                <h2>Voice Controls</h2>
+                <div id="recording-controls">
+                    <button id="record-button" class="voice-button idle">Start Recording</button>
+                    <button id="test-button" class="voice-button" style="background: #FF9800; font-size: 0.9em; padding: 8px 12px;">🧪 Test Sketch</button>
+                    <button id="voice-test-button" class="voice-button" style="background: #4CAF50; font-size: 0.9em; padding: 8px 12px;">🎤 Test Voice</button>
+                    <div class="voice-commands-help">
+                        <p><strong>Try saying:</strong></p>
+                        <ul>
+                            <li>"Draw a red circle"</li>
+                            <li>"Create a blue square"</li>
+                            <li>"Make it bigger"</li>
+                            <li>"Add a green triangle"</li>
+                        </ul>
+                    </div>
+                </div>
+                <div id="transcription-display">
+                    <label for="transcription-text">What you're saying:</label>
+                    <div id="transcription-text" class="transcription-text">
+                        Click "Start Recording" and speak your command...
+                    </div>
+                </div>
+                <div id="status-feedback">
+                    <div id="recording-status" class="status-message">Ready to record</div>
+                </div>
+            </section>
+
+            <!-- P5.js Canvas Section -->
+            <section id="canvas-section" class="canvas-container">
+                <h2>Generated Sketch</h2>
+                <div id="p5js-container">
+                    <div class="canvas-placeholder">
+                        Ready for your voice command
+                    </div>
+                </div>
+            </section>
+
+            <!-- Code Display Section -->
+            <section id="code-display" class="collapsible-panel">
+                <h2 onclick="toggleCodeDisplay()">Generated Code ▼</h2>
+                <div id="code-content">
+                    <pre id="generated-code">
+                        <!-- Generated P5.js code will appear here -->
+                    </pre>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Powered by Goose, P5.js, and ElevenLabs</p>
+        </footer>
+    </div>
+
+    <!-- JavaScript Modules -->
+    <script type="module" src="src/js/modules/voice-input.js"></script>
+    <script type="module" src="src/js/modules/goose-integration.js"></script>
+    <script type="module" src="src/js/modules/elevenlabs-tts.js"></script>
+    <script type="module" src="src/js/modules/p5js-renderer-fixed.js"></script>
+    <script type="module" src="src/js/app.js"></script>
+
+    <script>
+        // Global variables for voice recording
+        let isRecording = false;
+        let recognition = null;
+        let currentP5Instance = null;
+        
+        // Initialize everything when DOM loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Initializing Sketchee MVP...');
+            
+            // Set up all button handlers
+            setupButtons();
+            
+            // Initialize speech recognition
+            initializeSpeechRecognition();
+            
+            // Check browser compatibility
+            checkCompatibility();
+            
+            console.log('✅ Initialization complete');
+        });
+        
+        function setupButtons() {
+            // Record button
+            const recordButton = document.getElementById('record-button');
+            if (recordButton) {
+                recordButton.addEventListener('click', toggleRecording);
+                console.log('✅ Record button handler attached');
+            }
+            
+            // Test buttons
+            const testButton = document.getElementById('test-button');
+            if (testButton) {
+                testButton.addEventListener('click', testSketch);
+            }
+            
+            const voiceTestButton = document.getElementById('voice-test-button');
+            if (voiceTestButton) {
+                voiceTestButton.addEventListener('click', testVoiceCommand);
+            }
+        }
+        
+        function initializeSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                
+                recognition.lang = 'en-US';
+                recognition.continuous = false;
+                recognition.interimResults = true;
+                recognition.maxAlternatives = 1;
+                
+                // Event handlers
+                recognition.onstart = function() {
+                    console.log('🎙️ Voice recognition started');
+                    isRecording = true;
+                    updateRecordingState(true);
+                };
+                
+                recognition.onend = function() {
+                    console.log('⏹️ Voice recognition ended');
+                    isRecording = false;
+                    updateRecordingState(false);
+                };
+                
+                recognition.onresult = function(event) {
+                    let finalTranscript = '';
+                    let interimTranscript = '';
+                    
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            finalTranscript += transcript;
+                        } else {
+                            interimTranscript += transcript;
+                        }
+                    }
+                    
+                    updateTranscription(finalTranscript, interimTranscript);
+                    
+                    if (finalTranscript) {
+                        console.log('🗣️ Final transcript:', finalTranscript);
+                        processVoiceCommand(finalTranscript.trim());
+                    }
+                };
+                
+                recognition.onerror = function(event) {
+                    console.error('❌ Speech recognition error:', event.error);
+                    isRecording = false;
+                    updateRecordingState(false);
+                    updateStatus('Voice error: ' + event.error, 'error');
+                };
+                
+                console.log('✅ Speech recognition initialized');
+            } else {
+                console.warn('⚠️ Speech recognition not supported');
+                updateStatus('Voice input not supported. Use Chrome browser.', 'error');
+            }
+        }
+        
+        function toggleRecording() {
+            console.log('🎤 Record button clicked, isRecording:', isRecording);
+            
+            if (!recognition) {
+                alert('Voice recognition not available. Please use Chrome browser.');
+                return;
+            }
+            
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }
+        
+        function startRecording() {
+            try {
+                console.log('▶️ Starting recording...');
+                updateStatus('Listening... Click "Stop Recording" when done', 'processing');
+                recognition.start();
+            } catch (error) {
+                console.error('❌ Failed to start recording:', error);
+                updateStatus('Failed to start recording: ' + error.message, 'error');
+            }
+        }
+        
+        function stopRecording() {
+            try {
+                console.log('⏹️ Stopping recording...');
+                updateStatus('Processing your command...', 'processing');
+                recognition.stop();
+            } catch (error) {
+                console.error('❌ Failed to stop recording:', error);
+            }
+        }
+        
+        function updateRecordingState(recording) {
+            const recordButton = document.getElementById('record-button');
+            if (recordButton) {
+                recordButton.textContent = recording ? 'Stop Recording' : 'Start Recording';
+                recordButton.className = recording ? 'voice-button recording' : 'voice-button idle';
+            }
+            
+            if (!recording) {
+                updateStatus('Ready to record', '');
+            }
+        }
+        
+        function updateTranscription(finalText, interimText) {
+            const transcriptionElement = document.getElementById('transcription-text');
+            if (transcriptionElement) {
+                const displayText = finalText + (interimText ? ` <em>${interimText}</em>` : '');
+                transcriptionElement.innerHTML = displayText || 'Listening...';
+            }
+        }
+        
+        function updateStatus(message, type = '') {
+            const statusElement = document.getElementById('recording-status');
+            if (statusElement) {
+                statusElement.textContent = message;
+                statusElement.className = `status-message ${type}`;
+            }
+            console.log(`Status (${type}): ${message}`);
+        }
+        
+        function processVoiceCommand(transcript) {
+            console.log('🎯 Processing voice command:', transcript);
+            updateStatus('Generating your sketch...', 'processing');
+            
+            // Try app integration first
+            if (window.SketcheeApp && window.SketcheeApp.processVoiceCommand) {
+                try {
+                    window.SketcheeApp.processVoiceCommand(transcript);
+                    return;
+                } catch (error) {
+                    console.warn('⚠️ App processing failed, using fallback:', error);
+                }
+            }
+            
+            // Fallback: Direct processing
+            generateAndRenderSketch(transcript);
+        }
+        
+        function generateAndRenderSketch(command) {
+            console.log('🎨 Generating sketch for:', command);
+            
+            const cmd = command.toLowerCase();
+            let p5jsCode;
+            
+            // Simple command parsing
+            if (cmd.includes('circle')) {
+                const color = extractColor(cmd) || 'red';
+                const size = cmd.includes('big') ? 200 : cmd.includes('small') ? 80 : 150;
+                p5jsCode = createCircleCode(color, size);
+            } else if (cmd.includes('square') || cmd.includes('rectangle')) {
+                const color = extractColor(cmd) || 'blue';
+                const size = cmd.includes('big') ? 200 : cmd.includes('small') ? 80 : 120;
+                p5jsCode = createSquareCode(color, size);
+            } else if (cmd.includes('triangle')) {
+                const color = extractColor(cmd) || 'green';
+                const size = cmd.includes('big') ? 200 : cmd.includes('small') ? 80 : 120;
+                p5jsCode = createTriangleCode(color, size);
+            } else if (cmd.includes('spin') || cmd.includes('rotate')) {
+                p5jsCode = createSpinningCode();
+            } else {
+                p5jsCode = createDefaultCode();
+            }
+            
+            // Display generated code
+            const codeElement = document.getElementById('generated-code');
+            if (codeElement) {
+                codeElement.textContent = p5jsCode;
+            }
+            
+            // Render the sketch
+            renderP5JSSketch(p5jsCode);
+        }
+        
+        function renderP5JSSketch(code) {
+            const container = document.getElementById('p5js-container');
+            if (!container) {
+                console.error('❌ Canvas container not found');
+                return;
+            }
+            
+            // Clear previous sketch
+            if (currentP5Instance) {
+                currentP5Instance.remove();
+            }
+            container.innerHTML = '';
+            
+            try {
+                currentP5Instance = new p5((p) => {
+                    p.setup = function() {
+                        p.createCanvas(800, 600);
+                        console.log('✅ Voice sketch canvas created');
+                    };
+                    
+                    // Parse and execute the generated code
+                    const lines = code.split('\n');
+                    let inDrawFunction = false;
+                    let drawCode = '';
+                    
+                    for (const line of lines) {
+                        if (line.includes('function draw()')) {
+                            inDrawFunction = true;
+                        } else if (inDrawFunction && line.includes('}')) {
+                            break;
+                        } else if (inDrawFunction) {
+                            drawCode += line + '\n';
+                        }
+                    }
+                    
+                    p.draw = function() {
+                        // Execute the draw code
+                        try {
+                            eval(drawCode.replace(/(\w+)\(/g, 'p.$1('));
+                        } catch (error) {
+                            console.error('❌ P5.js execution error:', error);
+                            p.background(240);
+                            p.fill(255, 0, 0);
+                            p.textSize(16);
+                            p.text('Error in sketch', 20, 30);
+                        }
+                    };
+                }, 'p5js-container');
+                
+                container.classList.add('has-canvas');
+                updateStatus('Sketch created successfully! Try another command.', 'success');
+                
+                // Voice feedback
+                speakText('Your sketch has been created');
+                
+                console.log('🎉 Voice sketch rendered successfully!');
+                
+            } catch (error) {
+                console.error('❌ Failed to render voice sketch:', error);
+                container.innerHTML = `
+                    <div style="color: red; text-align: center; padding: 40px;">
+                        ❌ Failed to render sketch<br>
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                `;
+                updateStatus('Failed to create sketch. Please try again.', 'error');
+            }
+        }
+        
+        function extractColor(text) {
+            const colors = ['red', 'blue', 'green', 'yellow', 'orange', 'purple', 'pink', 'black', 'white', 'gray', 'brown'];
+            for (const color of colors) {
+                if (text.includes(color)) {
+                    return color;
+                }
+            }
+            return null;
+        }
+        
+        function getColorValues(colorName) {
+            const colorMap = {
+                'red': [255, 80, 80],
+                'blue': [80, 120, 255],
+                'green': [80, 255, 120],
+                'yellow': [255, 255, 80],
+                'orange': [255, 165, 80],
+                'purple': [200, 100, 255],
+                'pink': [255, 150, 200],
+                'black': [50, 50, 50],
+                'white': [255, 255, 255],
+                'gray': [150, 150, 150],
+                'brown': [165, 100, 80]
+            };
+            return colorMap[colorName] || [100, 150, 200];
+        }
+        
+        function createCircleCode(color, size) {
+            const colorValues = getColorValues(color);
+            return `function setup() {
+    createCanvas(800, 600);
+}
+
+function draw() {
+    background(240, 240, 240);
+    fill(${colorValues.join(', ')});
+    stroke(0);
+    strokeWeight(2);
+    ellipse(400, 300, ${size}, ${size});
+}`;
+        }
+        
+        function createSquareCode(color, size) {
+            const colorValues = getColorValues(color);
+            return `function setup() {
+    createCanvas(800, 600);
+}
+
+function draw() {
+    background(240, 240, 240);
+    fill(${colorValues.join(', ')});
+    stroke(0);
+    strokeWeight(2);
+    rectMode(CENTER);
+    rect(400, 300, ${size}, ${size});
+}`;
+        }
+        
+        function createTriangleCode(color, size) {
+            const colorValues = getColorValues(color);
+            const halfSize = size / 2;
+            return `function setup() {
+    createCanvas(800, 600);
+}
+
+function draw() {
+    background(240, 240, 240);
+    fill(${colorValues.join(', ')});
+    stroke(0);
+    strokeWeight(2);
+    triangle(400, ${300 - halfSize}, ${400 - halfSize}, ${300 + halfSize}, ${400 + halfSize}, ${300 + halfSize});
+}`;
+        }
+        
+        function createSpinningCode() {
+            return `function setup() {
+    createCanvas(800, 600);
+}
+
+function draw() {
+    background(240, 240, 240);
+    push();
+    translate(400, 300);
+    rotate(frameCount * 0.05);
+    fill(255, 100, 150);
+    stroke(0);
+    strokeWeight(2);
+    rectMode(CENTER);
+    rect(0, 0, 100, 100);
+    pop();
+}`;
+        }
+        
+        function createDefaultCode() {
+            return `function setup() {
+    createCanvas(800, 600);
+}
+
+function draw() {
+    background(240, 240, 240);
+    fill(100, 150, 200);
+    stroke(0);
+    strokeWeight(2);
+    ellipse(400, 300, 120, 120);
+}`;
+        }
+        
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+                utterance.volume = 0.8;
+                window.speechSynthesis.speak(utterance);
+                console.log('🔊 Speaking:', text);
+            }
+        }
+        
+        function checkCompatibility() {
+            const statusElement = document.getElementById('recording-status');
+            
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                if (statusElement) {
+                    statusElement.innerHTML = '⚠️ Voice input not supported. Please use Chrome browser.';
+                    statusElement.className = 'status-message error';
+                }
+            }
+        }
+        
+        // Test functions
+        function testSketch() {
+            console.log('🧪 TEST SKETCH CLICKED');
+            
+            const container = document.getElementById('p5js-container');
+            if (currentP5Instance) currentP5Instance.remove();
+            
+            container.innerHTML = '<div style="color: #2196F3; text-align: center; padding: 40px;">🧪 Testing...</div>';
+            
+            setTimeout(() => {
+                currentP5Instance = new p5((p) => {
+                    p.setup = function() {
+                        p.createCanvas(600, 400);
+                    };
+                    
+                    p.draw = function() {
+                        p.background(240);
+                        p.fill(255, 80, 80);
+                        p.stroke(0);
+                        p.strokeWeight(3);
+                        p.ellipse(300, 200, 150, 150);
+                        
+                        p.fill(0);
+                        p.textSize(20);
+                        p.textAlign(p.CENTER);
+                        p.text('🎉 P5.js Works!', 300, 50);
+                        
+                        p.fill(80, 120, 255);
+                        p.ellipse(300, 200, 80, 80);
+                    };
+                }, 'p5js-container');
+                
+                container.classList.add('has-canvas');
+                updateStatus('Test sketch successful!', 'success');
+            }, 1000);
+        }
+        
+        function testVoiceCommand() {
+            console.log('🎤 TEST VOICE CLICKED');
+            updateTranscription('draw a red circle', '(simulated)');
+            processVoiceCommand('draw a red circle');
+        }
+        
+        function toggleCodeDisplay() {
+            const codeDisplay = document.getElementById('code-display');
+            const codeContent = document.getElementById('code-content');
+            const header = codeDisplay.querySelector('h2');
+            
+            codeDisplay.classList.toggle('collapsed');
+            if (codeDisplay.classList.contains('collapsed')) {
+                codeContent.style.display = 'none';
+                header.innerHTML = 'Generated Code ▶';
+            } else {
+                codeContent.style.display = 'block';
+                header.innerHTML = 'Generated Code ▼';
+            }
+        }
+    </script>
+</body>
+</html>

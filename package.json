@@ -1,0 +1,41 @@
+{
+  "name": "sketchee-mvp",
+  "version": "1.0.0",
+  "description": "Voice-controlled P5.js sketch generator MVP",
+  "main": "src/index.html",
+  "type": "module",
+  "scripts": {
+    "start": "http-server . -p 8080 -o",
+    "dev": "http-server . -p 8080 -o -c-1",
+    "test": "node tests/run-tests.js",
+    "test:unit": "node tests/unit/test-runner.js",
+    "test:integration": "node tests/integration/test-runner.js"
+  },
+  "keywords": [
+    "voice-control",
+    "p5.js",
+    "creative-coding",
+    "speech-recognition",
+    "goose",
+    "elevenlabs"
+  ],
+  "author": "Sketchee MVP Team",
+  "license": "MIT",
+  "dependencies": {
+    "p5": "^1.7.0"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sketchee/sketchee-mvp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sketchee/sketchee-mvp/issues"
+  },
+  "homepage": "https://github.com/sketchee/sketchee-mvp#readme"
+}

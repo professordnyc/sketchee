@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sketchee Debug</title>
+    <!-- P5.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .debug-info { background: #f0f0f0; padding: 15px; margin: 10px 0; border-radius: 5px; }
+        .canvas-container { border: 2px solid #ccc; padding: 20px; margin: 20px 0; min-height: 400px; }
+        button { padding: 10px 20px; margin: 5px; font-size: 16px; }
+        #console-log { background: #333; color: #0f0; font-family: monospace; padding: 10px; height: 200px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Sketchee Debug Mode</h1>
+        
+        <div class="debug-info">
+            <h3>System Status:</h3>
+            <div id="system-status"></div>
+        </div>
+        
+        <div>
+            <button onclick="testP5JSBasic()">Test Basic P5.js</button>
+            <button onclick="testRedCircle()">Test Red Circle</button>
+            <button onclick="testBlueSquare()">Test Blue Square</button>
+            <button onclick="testSpinning()">Test Spinning Shape</button>
+            <button onclick="clearCanvas()">Clear Canvas</button>
+        </div>
+        
+        <div class="canvas-container" id="canvas-container">
+            <h3>Canvas Output:</h3>
+            <div id="p5js-container"></div>
+        </div>
+        
+        <div class="debug-info">
+            <h3>Console Log:</h3>
+            <div id="console-log"></div>
+        </div>
+        
+        <div class="debug-info">
+            <h3>Generated Code:</h3>
+            <pre id="code-display" style="background: #f8f8f8; padding: 10px; border-radius: 5px;"></pre>
+        </div>
+    </div>
+
+    <script>
+        // Debug console
+        const consoleLog = document.getElementById('console-log');
+        const originalConsoleLog = console.log;
+        console.log = function(...args) {
+            originalConsoleLog.apply(console, args);
+            consoleLog.innerHTML += args.join(' ') + '<br>';
+            consoleLog.scrollTop = consoleLog.scrollHeight;
+        };
+        
+        let currentP5Instance = null;
+        
+        // System status check
+        function checkSystemStatus() {
+            const status = document.getElementById('system-status');
+            let html = '';
+            
+            html += `<div>P5.js loaded: ${typeof p5 !== 'undefined' ? '✅' : '❌'}</div>`;
+            html += `<div>Web Speech API: ${('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) ? '✅' : '❌'}</div>`;
+            html += `<div>Speech Synthesis: ${'speechSynthesis' in window ? '✅' : '❌'}</div>`;
+            html += `<div>Current time: ${new Date().toLocaleTimeString()}</div>`;
+            
+            status.innerHTML = html;
+        }
+        
+        function clearCanvas() {
+            if (currentP5Instance) {
+                currentP5Instance.remove();
+                currentP5Instance = null;
+            }
+            document.getElementById('p5js-container').innerHTML = '';
+            document.getElementById('code-display').textContent = '';
+            console.log('Canvas cleared');
+        }
+        
+        function executeP5JSCode(code) {
+            console.log('Executing P5.js code:', code);
+            
+            // Clear any existing instance
+            clearCanvas();
+            
+            // Update code display
+            document.getElementById('code-display').textContent = code;
+            
+            try {
+                // Create new P5.js instance
+                currentP5Instance = new p5((p) => {
+                    // Replace all P5.js functions with p. prefixed versions
+                    const wrappedCode = code
+                        .replace(/createCanvas/g, 'p.createCanvas')
+                        .replace(/background/g, 'p.background')
+                        .replace(/fill/g, 'p.fill')
+                        .replace(/stroke/g, 'p.stroke')
+                        .replace(/noStroke/g, 'p.noStroke')
+                        .replace(/noFill/g, 'p.noFill')
+                        .replace(/ellipse/g, 'p.ellipse')
+                        .replace(/circle/g, 'p.circle')
+                        .replace(/rect/g, 'p.rect')
+                        .replace(/square/g, 'p.square')
+                        .replace(/line/g, 'p.line')
+                        .replace(/triangle/g, 'p.triangle')
+                        .replace(/point/g, 'p.point')
+                        .replace(/push/g, 'p.push')
+                        .replace(/pop/g, 'p.pop')
+                        .replace(/translate/g, 'p.translate')
+                        .replace(/rotate/g, 'p.rotate')
+                        .replace(/scale/g, 'p.scale')
+                        .replace(/frameCount/g, 'p.frameCount')
+                        .replace(/width/g, 'p.width')
+                        .replace(/height/g, 'p.height')
+                        .replace(/mouseX/g, 'p.mouseX')
+                        .replace(/mouseY/g, 'p.mouseY')
+                        .replace(/strokeWeight/g, 'p.strokeWeight')
+                        .replace(/rectMode/g, 'p.rectMode')
+                        .replace(/CENTER/g, 'p.CENTER');
+                    
+                    console.log('Wrapped code:', wrappedCode);
+                    
+                    // Execute the wrapped code
+                    eval(wrappedCode);
+                }, 'p5js-container');
+                
+                console.log('✅ P5.js instance created successfully');
+                
+            } catch (error) {
+                console.error('❌ Error executing P5.js code:', error);
+                document.getElementById('p5js-container').innerHTML = `
+                    <div style="color: red; padding: 20px; border: 2px solid red; border-radius: 5px;">
+                        <strong>Error:</strong> ${error.message}<br>
+                        <small>Check the console for more details</small>
+                    </div>
+                `;
+            }
+        }
+        
+        function testP5JSBasic() {
+            const code = `
+function setup() {
+    createCanvas(400, 400);
+}
+
+function draw() {
+    background(220);
+    fill(255, 0, 0);
+    ellipse(200, 200, 100, 100);
+}`;
+            executeP5JSCode(code);
+        }
+        
+        function testRedCircle() {
+            const code = `
+function setup() {
+    createCanvas(800, 600);
+}
+
+function draw() {
+    background(240, 240, 240);
+    fill(255, 80, 80);
+    stroke(0);
+    strokeWeight(2);
+    ellipse(400, 300, 150, 150);
+}`;
+            executeP5JSCode(code);
+        }
+        
+        function testBlueSquare() {
+            const code = `
+function setup() {
+    createCanvas(800, 600);
+}
+
+function draw() {
+    background(240, 240, 240);
+    fill(80, 120, 255);
+    stroke(0);
+    strokeWeight(2);
+    rectMode(CENTER);
+    rect(400, 300, 120, 120);
+}`;
+            executeP5JSCode(code);
+        }
+        
+        function testSpinning() {
+            const code = `
+function setup() {
+    createCanvas(800, 600);
+}
+
+function draw() {
+    background(240, 240, 240);
+    
+    push();
+    translate(400, 300);
+    rotate(frameCount * 0.05);
+    
+    fill(255, 100, 150);
+    stroke(0);
+    strokeWeight(2);
+    rectMode(CENTER);
+    rect(0, 0, 100, 100);
+    
+    pop();
+}`;
+            executeP5JSCode(code);
+        }
+        
+        // Initialize
+        checkSystemStatus();
+        setInterval(checkSystemStatus, 5000); // Update every 5 seconds
+        
+        console.log('🚀 Sketchee Debug Mode initialized');
+    </script>
+</body>
+</html>

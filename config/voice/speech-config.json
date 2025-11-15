@@ -1,0 +1,44 @@
+{
+  "speechRecognition": {
+    "language": "en-US",
+    "continuous": false,
+    "interimResults": true,
+    "maxAlternatives": 1,
+    "grammarFile": null
+  },
+  "elevenlabs": {
+    "apiBaseUrl": "https://api.elevenlabs.io/v1",
+    "voice": {
+      "voiceId": "21m00Tcm4TlvDq8ikWAM",
+      "name": "Rachel",
+      "stability": 0.5,
+      "similarityBoost": 0.5
+    },
+    "audio": {
+      "format": "mp3_22050_32",
+      "outputFormat": "mp3"
+    }
+  },
+  "feedback": {
+    "confirmationMessages": [
+      "Your sketch has been created",
+      "Sketch generated successfully",
+      "Drawing completed"
+    ],
+    "errorMessages": [
+      "I couldn't understand that command",
+      "Please try a different description",
+      "Command not recognized"
+    ],
+    "processingMessages": [
+      "Creating your sketch",
+      "Processing your request",
+      "Generating P5.js code"
+    ]
+  },
+  "timeouts": {
+    "recordingTimeout": 10000,
+    "processingTimeout": 15000,
+    "speechTimeout": 5000
+  }
+}
