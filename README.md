@@ -90,7 +90,7 @@ sketchee-mvp/
     └── run-tests.js       # Test runner
 ```
 
-## 🛠️ Development Team Roles
+## 🛠️ Development Team Roles (Subagents and Goose Agent as Orchestrator)
 
 ### 🏗️ Architect (COMPLETE)
 - ✅ Project structure and scaffolding
@@ -98,33 +98,13 @@ sketchee-mvp/
 - ✅ Module interface definitions
 - ✅ Technical documentation
 
-### 💻 Frontend Developer (TODO)
-**Priority Tasks** (12 minutes):
-1. **Voice Input Integration** - Implement Web Speech API in `voice-input.js`
-2. **UI Components** - Build recording controls and transcription display
-3. **P5.js Canvas** - Dynamic code execution and canvas management
-4. **Responsive Layout** - Finish CSS implementation
+## 🎯 MVP Features
 
-### 🔧 Backend Developer (TODO)
-**Priority Tasks** (15 minutes):
-1. **Goose Integration** - Natural language → P5.js code generation
-2. **Command Parsing** - Extract shapes, colors, positions from voice
-3. **ElevenLabs TTS** - Voice feedback implementation
-4. **Error Handling** - Graceful fallbacks and recovery
-
-### 🧪 QA Engineer (TODO)
-**Priority Tasks** (3 minutes):
-1. **End-to-End Testing** - Voice command to sketch rendering
-2. **Browser Compatibility** - Web Speech API across browsers
-3. **Error Scenario Testing** - Edge cases and failure modes
-
-## 🎯 MVP Success Criteria
-
-### Must Have Features
-- [ ] Voice command "Draw a red circle" generates working P5.js sketch
-- [ ] Generated sketch displays in browser canvas
-- [ ] Voice feedback confirms successful generation
-- [ ] Basic error handling for unsupported browsers
+### MVP Features
+- [x] Voice command "Draw a red circle" generates working P5.js sketch
+- [x] Generated sketch displays in browser canvas
+- [X] Feedback confirms successful generation
+- [x] Basic error handling for unsupported browsers
 
 ### Voice Commands Supported
 - Basic shapes: "draw a [color] [shape]"
@@ -206,6 +186,8 @@ Supported patterns:
 
 ### Challenge Context & Agent Orchestration
 
+Sketchee: use natural language and voice commands with Goose to create P5js sketches. 
+
 This project was created as a quick entry into Block and Code.tv's **nokeyboardsallowed.dev** challenge.
 
 Sketchee was built using **Goose** (Desktop UI for Windows or CLI, also available for Mac and Linux) and its agent runtime to orchestrate multiple subagents:
@@ -243,13 +225,6 @@ MIT License - See LICENSE file for details
 
 ## 🤝 Contributing
 
-This is an MVP sprint project. Focus on core functionality over features.
-
-### Development Workflow
-1. Clone repository
-2. Install dependencies: `npm install`
-3. Start development: `npm run dev`
-4. Run tests: `npm test`
-5. Submit focused pull requests
+Ping @professordnyc on Discord or GitHub for questions or feedback.
 
 
