@@ -6,7 +6,7 @@
 import { VoiceInput } from './modules/voice-input.js';
 import { GooseIntegration } from './modules/goose-integration.js';
 import { ElevenLabsTTS } from './modules/elevenlabs-tts.js';
-import { P5JSRenderer } from './modules/p5js-renderer-fixed.js';
+import { P5JSRenderer } from './modules/p5js-renderer.js';
 
 class SketcheeApp {
     constructor() {

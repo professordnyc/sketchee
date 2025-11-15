@@ -1,15 +1,18 @@
 {
   "name": "sketchee-mvp",
   "version": "1.0.0",
-  "description": "Voice-controlled P5.js sketch generator MVP",
-  "main": "src/index.html",
+  "description": "Voice-controlled P5.js sketch generator MVP with secure backend",
+  "main": "src/server/index.js",
   "type": "module",
   "scripts": {
-    "start": "http-server . -p 8080 -o",
-    "dev": "http-server . -p 8080 -o -c-1",
+    "start": "node src/server/index.js",
+    "client": "http-server . -p 8080 -o",
+    "server": "node src/server/index.js",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
     "test": "node tests/run-tests.js",
     "test:unit": "node tests/unit/test-runner.js",
-    "test:integration": "node tests/integration/test-runner.js"
+    "test:integration": "node tests/integration/test-runner.js",
+    "test:server": "NODE_ENV=test node --experimental-vm-modules node_modules/jest/bin/jest.js tests/server/"
   },
   "keywords": [
     "voice-control",
@@ -17,18 +20,28 @@
     "creative-coding",
     "speech-recognition",
     "goose",
-    "elevenlabs"
+    "elevenlabs",
+    "secure-backend"
   ],
   "author": "Sketchee MVP Team",
   "license": "MIT",
   "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "express-rate-limit": "^6.7.0",
+    "helmet": "^6.0.1",
     "p5": "^1.7.0"
   },
   "devDependencies": {
-    "http-server": "^14.1.1"
+    "concurrently": "^8.0.1",
+    "http-server": "^14.1.1",
+    "jest": "^29.5.0",
+    "supertest": "^6.3.3"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
   },
   "repository": {
     "type": "git",
@@ -37,5 +50,14 @@
   "bugs": {
     "url": "https://github.com/sketchee/sketchee-mvp/issues"
   },
-  "homepage": "https://github.com/sketchee/sketchee-mvp#readme"
+  "homepage": "https://github.com/sketchee/sketchee-mvp#readme",
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverage": true,
+    "coverageDirectory": "coverage/server",
+    "testMatch": [
+      "**/tests/server/**/*.test.js"
+    ],
+    "transform": {}
+  }
 }

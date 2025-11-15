@@ -1,19 +1,24 @@
 /**
  * ElevenLabs Text-to-Speech Module
- * Implements ElevenLabs API integration for voice feedback
+ * Implements ElevenLabs API integration with secure backend and Web Speech API fallback
  */
 
 export class ElevenLabsTTS {
     constructor(config) {
-        this.config = config;
-        this.apiUrl = config.elevenlabs?.apiBaseUrl || 'https://api.elevenlabs.io/v1';
-        this.voiceId = config.elevenlabs?.voice?.voiceId || '21m00Tcm4TlvDq8ikWAM';
+        this.config = config || {};
+        this.apiUrl = this.config.apiBaseUrl || 'https://api.elevenlabs.io/v1';
+        this.voiceId = this.config.voice?.voiceId || '21m00Tcm4TlvDq8ikWAM';
         this.audioQueue = [];
         this.isPlaying = false;
-        this.apiKey = null; // Will be loaded from environment or config
-        this.fallbackToWebAPI = true; // Enable fallback for MVP
+        this.apiKey = null;
+        this.fallbackToWebAPI = true;
+        this.rateLimit = {
+            remaining: 0,
+            reset: 0
+        };
         
         console.log('ElevenLabsTTS module initialized');
+        this.loadApiKey().catch(console.error);
     }
 
     async speak(text, priority = 'normal') {
@@ -51,31 +56,65 @@ export class ElevenLabsTTS {
         }
     }
 
+    /**
+     * Generate audio from text using ElevenLabs API
+     * @param {string} text - Text to convert to speech
+     * @returns {Promise<ArrayBuffer>} Audio data
+     */
     async generateAudio(text) {
-        const requestBody = {
-            text: text,
-            voice_settings: {
-                stability: this.config.elevenlabs?.voice?.stability || 0.5,
-                similarity_boost: this.config.elevenlabs?.voice?.similarityBoost || 0.5
-            },
-            model_id: "eleven_monolingual_v1"
-        };
-
-        const response = await fetch(`${this.apiUrl}/text-to-speech/${this.voiceId}`, {
-            method: 'POST',
-            headers: {
-                'Accept': 'audio/mpeg',
-                'Content-Type': 'application/json',
-                'xi-api-key': this.apiKey
-            },
-            body: JSON.stringify(requestBody)
-        });
-
-        if (!response.ok) {
-            throw new Error(`ElevenLabs API error: ${response.status} ${response.statusText}`);
+        if (this.fallbackToWebAPI) {
+            throw new Error('Using Web Speech API fallback');
         }
 
-        return await response.arrayBuffer();
+        if (!this.apiKey) {
+            throw new Error('No API key available');
+        }
+
+        try {
+            const response = await fetch(`${this.apiUrl}/text-to-speech/${this.voiceId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'xi-api-key': this.apiKey,
+                },
+                body: JSON.stringify({
+                    text: text,
+                    model_id: "eleven_monolingual_v1",
+                    voice_settings: {
+                        stability: this.config.voice?.stability || 0.5,
+                        similarity_boost: this.config.voice?.similarityBoost || 0.5
+                    }
+                })
+            });
+
+            if (response.status === 429) {
+                const resetTime = response.headers.get('x-ratelimit-reset');
+                this.rateLimit.reset = resetTime ? new Date(resetTime).getTime() : Date.now() + 60000;
+                throw new Error('Rate limit exceeded');
+            }
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.detail?.message || 'Failed to generate audio');
+            }
+
+            // Update rate limit info from headers if available
+            const remaining = response.headers.get('x-ratelimit-remaining');
+            const reset = response.headers.get('x-ratelimit-reset');
+            
+            if (remaining !== null) {
+                this.rateLimit.remaining = parseInt(remaining, 10);
+            }
+            if (reset) {
+                this.rateLimit.reset = new Date(reset).getTime();
+            }
+
+            return await response.arrayBuffer();
+
+        } catch (error) {
+            console.error('Error generating audio with ElevenLabs:', error);
+            throw error;
+        }
     }
 
     async playAudio(audioData) {
@@ -254,37 +293,45 @@ export class ElevenLabsTTS {
         console.log('ElevenLabs API key configured');
     }
 
+    /**
+     * Load API key from the secure backend server
+     * @returns {Promise<boolean>} True if API key was loaded successfully
+     */
     async loadApiKey() {
         try {
-            // Try to load API key from various sources
-            
-            // 1. Environment variable (if available)
-            if (typeof process !== 'undefined' && process.env?.ELEVENLABS_API_KEY) {
-                this.setApiKey(process.env.ELEVENLABS_API_KEY);
-                return;
-            }
-            
-            // 2. Local config file (if accessible)
-            try {
-                const response = await fetch('/config/voice/elevenlabs-api-key.txt');
-                if (response.ok) {
-                    const apiKey = (await response.text()).trim();
-                    if (apiKey && apiKey !== 'your_elevenlabs_api_key_here') {
-                        this.setApiKey(apiKey);
-                        return;
-                    }
+            // Try to get API key from our secure backend
+            const response = await fetch('http://localhost:3001/api/keys', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // Add any authentication headers if needed
                 }
-            } catch (configError) {
-                console.log('No local API key file found');
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to fetch API key');
             }
-            
-            // 3. No API key found - use Web Speech API fallback
-            console.log('No ElevenLabs API key found, using Web Speech API fallback');
-            this.fallbackToWebAPI = true;
-            
+
+            if (data.elevenlabs && data.elevenlabs !== '***MASKED***') {
+                this.apiKey = data.elevenlabs;
+                this.rateLimit = {
+                    remaining: data.rateLimit?.remaining || 0,
+                    reset: data.rateLimit?.reset || 0
+                };
+                this.fallbackToWebAPI = false;
+                console.log('ElevenLabs API key loaded successfully');
+                return true;
+            }
+
+            throw new Error('No valid API key received from server');
+
         } catch (error) {
-            console.warn('Error loading API key:', error);
+            console.warn('Failed to load ElevenLabs API key:', error.message);
+            console.log('Falling back to Web Speech API');
             this.fallbackToWebAPI = true;
+            return false;
         }
     }
 
